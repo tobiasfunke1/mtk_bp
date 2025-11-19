@@ -1,0 +1,12 @@
+[project]
+name = "mtk-bp"
+version = "0.1.0"
+description = "MediaTek BP firmware tools"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "kaitaistruct==0.11",
+    "typer==0.12.3",
+    "hexdump==3.3",
+    "ruff>=0.14",
+]
