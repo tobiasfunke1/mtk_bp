@@ -1,281 +1,324 @@
 # This is a generated file! Please edit source .ksy file and use kaitai-struct-compiler to rebuild
+# type: ignore
 
 import kaitaistruct
 from kaitaistruct import KaitaiStruct, KaitaiStream, BytesIO
 
 
-if getattr(kaitaistruct, 'API_VERSION', (0, 9)) < (0, 9):
-    raise Exception("Incompatible Kaitai Struct Python API: 0.9 or later is required, but you have %s" % (kaitaistruct.__version__))
+if getattr(kaitaistruct, 'API_VERSION', (0, 9)) < (0, 11):
+    raise Exception("Incompatible Kaitai Struct Python API: 0.11 or later is required, but you have %s" % (kaitaistruct.__version__))
 
 class MtkDbgInfo(KaitaiStruct):
     def __init__(self, _io, _parent=None, _root=None):
-        self._io = _io
+        super(MtkDbgInfo, self).__init__(_io)
         self._parent = _parent
-        self._root = _root if _root else self
+        self._root = _root or self
         self._read()
 
     def _read(self):
-        self.header = MtkDbgInfo.CatiHeader(self._io, self, self._root)
+        self.container = MtkDbgInfo.DatabasesContainer(self._io, self, self._root)
 
-    class EmptyBody(KaitaiStruct):
+
+    def _fetch_instances(self):
+        pass
+        self.container._fetch_instances()
+
+    class Database(KaitaiStruct):
         def __init__(self, _io, _parent=None, _root=None):
-            self._io = _io
+            super(MtkDbgInfo.Database, self).__init__(_io)
             self._parent = _parent
-            self._root = _root if _root else self
-            self._read()
-
-        def _read(self):
-            pass
-
-
-    class CatiDebugDsp(KaitaiStruct):
-        def __init__(self, _io, _parent=None, _root=None):
-            self._io = _io
-            self._parent = _parent
-            self._root = _root if _root else self
-            self._read()
-
-        def _read(self):
-            self.unk3 = self._io.read_u4le()
-            self.unk_str1 = (self._io.read_bytes_term(0, False, True, True)).decode(u"ascii")
-            self.unk_str2 = (self._io.read_bytes_term(0, False, True, True)).decode(u"ascii")
-            self.unk_str3 = (self._io.read_bytes_term(0, False, True, True)).decode(u"ascii")
-            self.date_str = (self._io.read_bytes_term(0, False, True, True)).decode(u"ascii")
-            self.symbols_start = self._io.read_u4le()
-            self.files_start = self._io.read_u4le()
-            self.symbols = []
-            i = 0
-            while True:
-                _ = MtkDbgInfo.SymbolEntry(self._io, self, self._root)
-                self.symbols.append(_)
-                if _.symbol == u"":
-                    break
-                i += 1
-            self.files = []
-            i = 0
-            while True:
-                _ = MtkDbgInfo.FileEntryDsp(self._io, self, self._root)
-                self.files.append(_)
-                if _.filename == u"":
-                    break
-                i += 1
-
-
-    class FileEntryDsp(KaitaiStruct):
-        def __init__(self, _io, _parent=None, _root=None):
-            self._io = _io
-            self._parent = _parent
-            self._root = _root if _root else self
-            self._read()
-
-        def _read(self):
-            self.filename = (self._io.read_bytes_term(0, False, True, True)).decode(u"ascii")
-            _on = self.filename
-            if _on == u"":
-                self.body = MtkDbgInfo.EmptyBody(self._io, self, self._root)
-            else:
-                self.body = MtkDbgInfo.FileEntryDspBody(self._io, self, self._root)
-
-
-    class SymbolEntry(KaitaiStruct):
-        def __init__(self, _io, _parent=None, _root=None):
-            self._io = _io
-            self._parent = _parent
-            self._root = _root if _root else self
-            self._read()
-
-        def _read(self):
-            self.symbol = (self._io.read_bytes_term(0, False, True, True)).decode(u"ascii")
-            _on = self.symbol
-            if _on == u"":
-                self.body = MtkDbgInfo.EmptyBody(self._io, self, self._root)
-            else:
-                self.body = MtkDbgInfo.SymbolEntryBody(self._io, self, self._root)
-
-
-    class FileEntryDspBody(KaitaiStruct):
-        def __init__(self, _io, _parent=None, _root=None):
-            self._io = _io
-            self._parent = _parent
-            self._root = _root if _root else self
-            self._read()
-
-        def _read(self):
-            self.num_addr_pairs = self._io.read_u4le()
-            self.addr_pairs = []
-            for i in range(self.num_addr_pairs):
-                self.addr_pairs.append(MtkDbgInfo.AddrTriplet(self._io, self, self._root))
-
-
-
-    class ContainerEntryInfo(KaitaiStruct):
-        def __init__(self, _io, _parent=None, _root=None):
-            self._io = _io
-            self._parent = _parent
-            self._root = _root if _root else self
-            self._read()
-
-        def _read(self):
-            self.unk1 = self._io.read_u4le()
-            self.name = (self._io.read_bytes_term(0, False, True, True)).decode(u"ascii")
-            self.unk2 = (self._io.read_bytes_term(0, False, True, True)).decode(u"ascii")
-
-
-    class CatiContainer(KaitaiStruct):
-        def __init__(self, _io, _parent=None, _root=None):
-            self._io = _io
-            self._parent = _parent
-            self._root = _root if _root else self
-            self._read()
-
-        def _read(self):
-            self.unk1 = self._io.read_u4le()
-            self.size = self._io.read_u4le()
-            self._raw_entry_stream = self._io.read_bytes((self.size - 16))
-            _io__raw_entry_stream = KaitaiStream(BytesIO(self._raw_entry_stream))
-            self.entry_stream = MtkDbgInfo.CatiHeaders(_io__raw_entry_stream, self, self._root)
-            self.num_entry_info = self._io.read_u4le()
-            self.entry_info = []
-            for i in range(self.num_entry_info):
-                self.entry_info.append(MtkDbgInfo.ContainerEntryInfo(self._io, self, self._root))
-
-
-
-    class FileEntryBody(KaitaiStruct):
-        def __init__(self, _io, _parent=None, _root=None):
-            self._io = _io
-            self._parent = _parent
-            self._root = _root if _root else self
-            self._read()
-
-        def _read(self):
-            self.num_addr_pairs = self._io.read_u4le()
-            self.addr_pairs = []
-            for i in range(self.num_addr_pairs):
-                self.addr_pairs.append(MtkDbgInfo.AddrPair(self._io, self, self._root))
-
-
-
-    class CatiHeaders(KaitaiStruct):
-        def __init__(self, _io, _parent=None, _root=None):
-            self._io = _io
-            self._parent = _parent
-            self._root = _root if _root else self
-            self._read()
-
-        def _read(self):
-            self.entries = []
-            i = 0
-            while not self._io.is_eof():
-                self.entries.append(MtkDbgInfo.CatiHeader(self._io, self, self._root))
-                i += 1
-
-
-
-    class AddrTriplet(KaitaiStruct):
-        def __init__(self, _io, _parent=None, _root=None):
-            self._io = _io
-            self._parent = _parent
-            self._root = _root if _root else self
-            self._read()
-
-        def _read(self):
-            self.addr1 = self._io.read_u4le()
-            self.addr2 = self._io.read_u4le()
-            self.addr3 = self._io.read_u4le()
-
-
-    class CatiHeader(KaitaiStruct):
-        def __init__(self, _io, _parent=None, _root=None):
-            self._io = _io
-            self._parent = _parent
-            self._root = _root if _root else self
+            self._root = _root
             self._read()
 
         def _read(self):
             self.magic = self._io.read_bytes(4)
             if not self.magic == b"\x43\x41\x54\x49":
-                raise kaitaistruct.ValidationNotEqualError(b"\x43\x41\x54\x49", self.magic, self._io, u"/types/cati_header/seq/0")
-            self.cati_type = self._io.read_u4le()
-            _on = self.cati_type
-            if _on == 1380865091:
-                self.body = MtkDbgInfo.CatiContainer(self._io, self, self._root)
-            elif _on == 1:
-                self.body = MtkDbgInfo.CatiDebug(self._io, self, self._root)
-            elif _on == 2:
-                self.body = MtkDbgInfo.CatiDebugDsp(self._io, self, self._root)
+                raise kaitaistruct.ValidationNotEqualError(b"\x43\x41\x54\x49", self.magic, self._io, u"/types/database/seq/0")
+            self.version = self._io.read_u4le()
+            self.sub_version = self._io.read_u4le()
+            self.project_name = (self._io.read_bytes_term(0, False, True, True)).decode(u"UTF-8")
+            self.hw_version = (self._io.read_bytes_term(0, False, True, True)).decode(u"UTF-8")
+            self.sw_version = (self._io.read_bytes_term(0, False, True, True)).decode(u"UTF-8")
+            self.build_time = (self._io.read_bytes_term(0, False, True, True)).decode(u"UTF-8")
+            self.symbol_table_rel_offset = self._io.read_u4le()
+            self.file_table_rel_offset = self._io.read_u4le()
 
 
-    class AddrPair(KaitaiStruct):
+        def _fetch_instances(self):
+            pass
+            _ = self.file_table
+            if hasattr(self, '_m_file_table'):
+                pass
+                self._m_file_table._fetch_instances()
+
+            _ = self.symbol_table
+            if hasattr(self, '_m_symbol_table'):
+                pass
+                self._m_symbol_table._fetch_instances()
+
+
+        @property
+        def abs_file_table_offset(self):
+            if hasattr(self, '_m_abs_file_table_offset'):
+                return self._m_abs_file_table_offset
+
+            self._m_abs_file_table_offset = self.ori_offset + self.file_table_rel_offset
+            return getattr(self, '_m_abs_file_table_offset', None)
+
+        @property
+        def abs_symbol_table_offset(self):
+            if hasattr(self, '_m_abs_symbol_table_offset'):
+                return self._m_abs_symbol_table_offset
+
+            self._m_abs_symbol_table_offset = self.ori_offset + self.symbol_table_rel_offset
+            return getattr(self, '_m_abs_symbol_table_offset', None)
+
+        @property
+        def file_table(self):
+            if hasattr(self, '_m_file_table'):
+                return self._m_file_table
+
+            _pos = self._io.pos()
+            self._io.seek(self.abs_file_table_offset)
+            self._m_file_table = MtkDbgInfo.FileTable(self.version, self._io, self, self._root)
+            self._io.seek(_pos)
+            return getattr(self, '_m_file_table', None)
+
+        @property
+        def ori_offset(self):
+            if hasattr(self, '_m_ori_offset'):
+                return self._m_ori_offset
+
+            self._m_ori_offset = self._parent.offset
+            return getattr(self, '_m_ori_offset', None)
+
+        @property
+        def symbol_table(self):
+            if hasattr(self, '_m_symbol_table'):
+                return self._m_symbol_table
+
+            _pos = self._io.pos()
+            self._io.seek(self.abs_symbol_table_offset)
+            self._m_symbol_table = MtkDbgInfo.SymbolTable(self._io, self, self._root)
+            self._io.seek(_pos)
+            return getattr(self, '_m_symbol_table', None)
+
+
+    class DatabaseContainer(KaitaiStruct):
         def __init__(self, _io, _parent=None, _root=None):
-            self._io = _io
+            super(MtkDbgInfo.DatabaseContainer, self).__init__(_io)
             self._parent = _parent
-            self._root = _root if _root else self
+            self._root = _root
             self._read()
 
         def _read(self):
-            self.addr1 = self._io.read_u4le()
-            self.addr2 = self._io.read_u4le()
+            self.offset = self._io.read_u4le()
+            self.name = (self._io.read_bytes_term(0, False, True, True)).decode(u"UTF-8")
+            self.trace_tag = (self._io.read_bytes_term(0, False, True, True)).decode(u"UTF-8")
+
+
+        def _fetch_instances(self):
+            pass
+            _ = self.database
+            if hasattr(self, '_m_database'):
+                pass
+                self._m_database._fetch_instances()
+
+
+        @property
+        def database(self):
+            if hasattr(self, '_m_database'):
+                return self._m_database
+
+            _pos = self._io.pos()
+            self._io.seek(self.offset)
+            self._m_database = MtkDbgInfo.Database(self._io, self, self._root)
+            self._io.seek(_pos)
+            return getattr(self, '_m_database', None)
+
+
+    class DatabasesContainer(KaitaiStruct):
+        def __init__(self, _io, _parent=None, _root=None):
+            super(MtkDbgInfo.DatabasesContainer, self).__init__(_io)
+            self._parent = _parent
+            self._root = _root
+            self._read()
+
+        def _read(self):
+            self.magic = self._io.read_bytes(8)
+            if not self.magic == b"\x43\x41\x54\x49\x43\x54\x4E\x52":
+                raise kaitaistruct.ValidationNotEqualError(b"\x43\x41\x54\x49\x43\x54\x4E\x52", self.magic, self._io, u"/types/databases_container/seq/0")
+            self.version = self._io.read_u2le()
+            self.sub_version = self._io.read_u2le()
+            self.db_offset = self._io.read_u4le()
+
+
+        def _fetch_instances(self):
+            pass
+            _ = self.databases
+            if hasattr(self, '_m_databases'):
+                pass
+                for i in range(len(self._m_databases)):
+                    pass
+                    self._m_databases[i]._fetch_instances()
+
+
+            _ = self.db_count
+            if hasattr(self, '_m_db_count'):
+                pass
+
+
+        @property
+        def databases(self):
+            if hasattr(self, '_m_databases'):
+                return self._m_databases
+
+            _pos = self._io.pos()
+            self._io.seek(self.db_offset + 4)
+            self._m_databases = []
+            for i in range(self.db_count):
+                self._m_databases.append(MtkDbgInfo.DatabaseContainer(self._io, self, self._root))
+
+            self._io.seek(_pos)
+            return getattr(self, '_m_databases', None)
+
+        @property
+        def db_count(self):
+            if hasattr(self, '_m_db_count'):
+                return self._m_db_count
+
+            _pos = self._io.pos()
+            self._io.seek(self.db_offset)
+            self._m_db_count = self._io.read_u4le()
+            self._io.seek(_pos)
+            return getattr(self, '_m_db_count', None)
 
 
     class FileEntry(KaitaiStruct):
-        def __init__(self, _io, _parent=None, _root=None):
-            self._io = _io
+        def __init__(self, version, _io, _parent=None, _root=None):
+            super(MtkDbgInfo.FileEntry, self).__init__(_io)
             self._parent = _parent
-            self._root = _root if _root else self
+            self._root = _root
+            self.version = version
             self._read()
 
         def _read(self):
-            self.filename = (self._io.read_bytes_term(0, False, True, True)).decode(u"ascii")
-            _on = self.filename
-            if _on == u"":
-                self.body = MtkDbgInfo.EmptyBody(self._io, self, self._root)
-            else:
-                self.body = MtkDbgInfo.FileEntryBody(self._io, self, self._root)
+            self.filepath = (self._io.read_bytes_term(0, False, True, True)).decode(u"UTF-8")
+            if self.filepath != u"":
+                pass
+                self.count = self._io.read_u4le()
+
+            if self.filepath != u"":
+                pass
+                self.ranges = []
+                for i in range(self.count):
+                    self.ranges.append(MtkDbgInfo.RangeEntry(self.version, self._io, self, self._root))
 
 
-    class SymbolEntryBody(KaitaiStruct):
-        def __init__(self, _io, _parent=None, _root=None):
-            self._io = _io
+
+
+        def _fetch_instances(self):
+            pass
+            if self.filepath != u"":
+                pass
+
+            if self.filepath != u"":
+                pass
+                for i in range(len(self.ranges)):
+                    pass
+                    self.ranges[i]._fetch_instances()
+
+
+
+
+    class FileTable(KaitaiStruct):
+        def __init__(self, version, _io, _parent=None, _root=None):
+            super(MtkDbgInfo.FileTable, self).__init__(_io)
             self._parent = _parent
-            self._root = _root if _root else self
+            self._root = _root
+            self.version = version
             self._read()
 
         def _read(self):
-            self.addrs = MtkDbgInfo.AddrPair(self._io, self, self._root)
+            self.entries = []
+            i = 0
+            while True:
+                _ = MtkDbgInfo.FileEntry(self.version, self._io, self, self._root)
+                self.entries.append(_)
+                if _.filepath == u"":
+                    break
+                i += 1
 
 
-    class CatiDebug(KaitaiStruct):
-        def __init__(self, _io, _parent=None, _root=None):
-            self._io = _io
+        def _fetch_instances(self):
+            pass
+            for i in range(len(self.entries)):
+                pass
+                self.entries[i]._fetch_instances()
+
+
+
+    class RangeEntry(KaitaiStruct):
+        def __init__(self, version, _io, _parent=None, _root=None):
+            super(MtkDbgInfo.RangeEntry, self).__init__(_io)
             self._parent = _parent
-            self._root = _root if _root else self
+            self._root = _root
+            self.version = version
             self._read()
 
         def _read(self):
-            self.unk3 = self._io.read_u4le()
-            self.unk_str1 = (self._io.read_bytes_term(0, False, True, True)).decode(u"ascii")
-            self.unk_str2 = (self._io.read_bytes_term(0, False, True, True)).decode(u"ascii")
-            self.unk_str3 = (self._io.read_bytes_term(0, False, True, True)).decode(u"ascii")
-            self.date_str = (self._io.read_bytes_term(0, False, True, True)).decode(u"ascii")
-            self.symbols_start = self._io.read_u4le()
-            self.files_start = self._io.read_u4le()
-            self.symbols = []
+            self.start_address = self._io.read_u4le()
+            self.end_address = self._io.read_u4le()
+            if self.version >= 2:
+                pass
+                self.line_number = self._io.read_u4le()
+
+
+
+        def _fetch_instances(self):
+            pass
+            if self.version >= 2:
+                pass
+
+
+
+    class SymbolEntry(KaitaiStruct):
+        def __init__(self, _io, _parent=None, _root=None):
+            super(MtkDbgInfo.SymbolEntry, self).__init__(_io)
+            self._parent = _parent
+            self._root = _root
+            self._read()
+
+        def _read(self):
+            self.name = (self._io.read_bytes_term(0, False, True, True)).decode(u"UTF-8")
+            self.start_address = self._io.read_u4le()
+            self.end_address = self._io.read_u4le()
+
+
+        def _fetch_instances(self):
+            pass
+
+
+    class SymbolTable(KaitaiStruct):
+        def __init__(self, _io, _parent=None, _root=None):
+            super(MtkDbgInfo.SymbolTable, self).__init__(_io)
+            self._parent = _parent
+            self._root = _root
+            self._read()
+
+        def _read(self):
+            self.entries = []
             i = 0
             while True:
                 _ = MtkDbgInfo.SymbolEntry(self._io, self, self._root)
-                self.symbols.append(_)
-                if _.symbol == u"":
-                    break
-                i += 1
-            self.files = []
-            i = 0
-            while True:
-                _ = MtkDbgInfo.FileEntry(self._io, self, self._root)
-                self.files.append(_)
-                if _.filename == u"":
+                self.entries.append(_)
+                if _.name == u"":
                     break
                 i += 1
 
 
-
+        def _fetch_instances(self):
+            pass
+            for i in range(len(self.entries)):
+                pass
+                self.entries[i]._fetch_instances()

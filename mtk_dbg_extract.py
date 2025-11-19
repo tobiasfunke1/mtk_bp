@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import argparse
+
 import typer
 from mtk_structs.mtk_dbg_info import MtkDbgInfo
 from kaitaistruct import KaitaiStream
@@ -8,79 +8,90 @@ from kaitaistruct import KaitaiStream
 app = typer.Typer()
 
 
-def file_info(files):
-    for file in files:
+def file_info(file_table: MtkDbgInfo.FileTable):
+    for file_entry in file_table.entries:
+        file_entry: MtkDbgInfo.FileEntry
+
         # terminator entry
-        if file.filename == '':
+        if file_entry.filepath == '':
             break
 
-        print(file.filename)
-        for addr_pair in file.body.addr_pairs:
-            print(f'{addr_pair.addr1:#010x} - {addr_pair.addr2:#010x}')
+        print(file_entry.filepath)
+        for range_entry in file_entry.ranges:
+            range_entry: MtkDbgInfo.RangeEntry
+            print(f'\t{range_entry.start_address:#010x} - {range_entry.end_address:#010x}')
 
 
-def symbol_text(symbols, remap=False, as_functions=False):
-    for sym in symbols:
+def symbol_text(symbol_table: MtkDbgInfo.SymbolTable, remap=False, as_functions=False):
+    for symbol_entry in symbol_table.entries:
+        symbol_entry: MtkDbgInfo.SymbolEntry
+
         # terminator entry
-        if sym.symbol == '':
+        if symbol_entry.name == '':
             break
 
-        symbol = sym.symbol.replace(' ', '_')
-        addr = sym.body.addrs.addr1
-        if remap and addr < 0x90000000:
-            addr += 0x90000000
+        name = symbol_entry.name.replace(' ', '_')
+        start_address = symbol_entry.start_address
+        if remap and start_address < 0x90000000:
+            start_address += 0x90000000
 
         def_type = 'f' if as_functions else 'l'
 
-        print(f'{symbol} {addr:#010x} {def_type}')
+        print(f'{name} {start_address:#010x} {def_type}')
 
 
 def load_dbg_info(dbg_file):
     mtk_dbg = MtkDbgInfo(KaitaiStream(dbg_file))
-    assert mtk_dbg.header.cati_type == 0x524E5443  # root container
     return mtk_dbg
 
 
 @app.command()
 def files(dbg_file: typer.FileBinaryRead):
     mtk_dbg = load_dbg_info(dbg_file)
-    container = mtk_dbg.header.body
+    container = mtk_dbg.container
 
-    for i in range(container.num_entry_info):
-        info = container.entry_info[i]
-        print(f'{info.unk1:#08x} {info.name} {info.unk2}')
-        file_info(container.entry_stream.entries[i].body.files)
+    for i, database_container in enumerate(container.databases):
+        database_container: MtkDbgInfo.DatabaseContainer
+        database: MtkDbgInfo.Database = database_container.database
+
+        print(f'# {database_container.offset:#08x} {database_container.name} {database_container.trace_tag}')
+        file_info(database.file_table)
 
 
 @app.command()
 def symbols(dbg_file: typer.FileBinaryRead, remap: bool = False, labels: bool = False):
     mtk_dbg = load_dbg_info(dbg_file)
-    container = mtk_dbg.header.body
+    container = mtk_dbg.container
 
-    for i in range(container.num_entry_info):
-        if container.num_entry_info > 1:
-            info = container.entry_info[i]
-            print(f'# {info.unk1:#08x} {info.name} {info.unk2}')
-        symbol_text(container.entry_stream.entries[i].body.symbols, remap=remap, as_functions=(not labels))
+    for i, database_container in enumerate(container.databases):
+        database_container: MtkDbgInfo.DatabaseContainer
+        database: MtkDbgInfo.Database = database_container.database
 
-    if container.num_entry_info > 1:
+        if container.db_count > 1:
+            print(f'# {database_container.offset:#08x} {database_container.name} {database_container.trace_tag}')
+
+        symbol_text(database.symbol_table, remap=remap, as_functions=(not labels))
+
+    if container.db_count > 1:
         print('# WARNING: output contains symbols for multiple debug info entries (separator lines begin with "#"")')
 
 
 @app.command()
 def info(dbg_file: typer.FileBinaryRead):
     mtk_dbg = load_dbg_info(dbg_file)
+    container = mtk_dbg.container
 
-    container = mtk_dbg.header.body
+    for i, database_container in enumerate(container.databases):
+        database_container: MtkDbgInfo.DatabaseContainer
+        database: MtkDbgInfo.Database = database_container.database
 
-    for i in range(container.num_entry_info):
-        info = container.entry_info[i]        
-        entry = container.entry_stream.entries[i].body
+        file_table = database.file_table.entries
+        symbol_table = database.symbol_table.entries
 
-        assert entry.files[-1].filename == ''
-        assert entry.symbols[-1].symbol == ''
+        assert file_table[-1].filepath == ''
+        assert symbol_table[-1].name == ''
 
-        print(f'{info.unk1:#08x} {info.name} {info.unk2}:\t{len(entry.files) - 1} files, {len(entry.symbols) - 1} symbols')
+        print(f'{i:2d}: {database_container.offset:#08x} {database_container.name} {database_container.trace_tag}:\t{len(file_table) - 1} files, {len(symbol_table) - 1} symbols')
 
 
 if __name__ == '__main__':

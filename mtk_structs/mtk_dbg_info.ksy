@@ -1,185 +1,140 @@
 meta:
   id: mtk_dbg_info
   file-extension: mtk_dbg_info
-  encoding: ascii
+  encoding: UTF-8
   endian: le
 
 seq:
-  - id: header
-    type: cati_header
+  - id: container
+    type: databases_container
 
 types:
 
-  empty_body: {}
-  
-  container_entry_info:
+  databases_container:
     seq:
-      - id: unk1
+      - id: magic
+        contents: "CATICTNR"
+      - id: version
+        type: u2
+      - id: sub_version
+        type: u2
+      - id: db_offset
+        type: u4
+
+    instances:
+      db_count:
+        pos: db_offset
+        type: u4
+
+      databases:
+        pos: db_offset+4
+        type: database_container
+        repeat: expr
+        repeat-expr: db_count
+
+  database_container:
+    seq:
+      - id: offset
         type: u4
       - id: name
         type: strz
-      - id: unk2
+      - id: trace_tag
         type: strz
 
-  cati_header:
+    instances:
+      database:
+        pos: offset
+        type: database
+
+  database:
     seq:
       - id: magic
         contents: "CATI"
-      - id: cati_type
+      - id: version
+        type: u4
+      - id: sub_version
+        type: u4
+      - id: project_name
+        type: strz
+      - id: hw_version
+        type: strz
+      - id: sw_version
+        type: strz
+      - id: build_time
+        type: strz
+      - id: symbol_table_rel_offset
+        type: u4
+      - id: file_table_rel_offset
         type: u4
 
-      - id: body
-        type:
-          switch-on: cati_type
-          cases:
-            0x524E5443: cati_container  # "CTNR"
-            1: cati_debug
-            2: cati_debug_dsp
-            
-  cati_headers:
+    instances:
+      ori_offset:
+        value: _parent.offset
+      abs_symbol_table_offset:
+        value: ori_offset + symbol_table_rel_offset
+      abs_file_table_offset:
+        value: ori_offset + file_table_rel_offset
+      symbol_table:
+        pos: abs_symbol_table_offset
+        type: symbol_table
+      file_table:
+        pos: abs_file_table_offset
+        type: file_table(version)
+
+  symbol_table:
     seq:
       - id: entries
-        type: cati_header
-        repeat: eos
-
-  cati_container:
-    seq:
-      - id: unk1
-        type: u4
-      - id: size
-        type: u4
-      - id: entry_stream
-        type: cati_headers
-        size: size - 0x10
-      - id: num_entry_info
-        type: u4
-      - id: entry_info
-        type: container_entry_info
-        repeat: expr
-        repeat-expr: num_entry_info
-
-  cati_debug:
-    seq:
-      - id: unk3
-        type: u4
-      - id: unk_str1
-        type: strz
-      - id: unk_str2
-        type: strz
-      - id: unk_str3
-        type: strz
-      - id: date_str
-        type: strz
-      - id: symbols_start
-        type: u4
-      - id: files_start
-        type: u4
-
-      - id: symbols
         type: symbol_entry
         repeat: until
-        repeat-until: _.symbol == ""
-        
-      - id: files
-        type: file_entry
-        repeat: until
-        repeat-until: _.filename == ""
-
-  cati_debug_dsp:
-    seq:
-      - id: unk3
-        type: u4
-      - id: unk_str1
-        type: strz
-      - id: unk_str2
-        type: strz
-      - id: unk_str3
-        type: strz
-      - id: date_str
-        type: strz
-      - id: symbols_start
-        type: u4
-      - id: files_start
-        type: u4
-
-      - id: symbols
-        type: symbol_entry
-        repeat: until
-        repeat-until: _.symbol == ""
-        
-      - id: files
-        type: file_entry_dsp
-        repeat: until
-        repeat-until: _.filename == ""
-
-  addr_pair:
-    seq:
-      - id: addr1
-        type: u4
-      - id: addr2
-        type: u4
-  
-  addr_triplet:
-    seq:
-      - id: addr1
-        type: u4
-      - id: addr2
-        type: u4
-      - id: addr3
-        type: u4
-
-  symbol_entry_body:
-    seq:
-      - id: addrs
-        type: addr_pair
+        repeat-until: _.name == ""
 
   symbol_entry:
     seq:
-      - id: symbol
+      - id: name
         type: strz
-      - id: body
-        type:
-          switch-on: symbol
-          cases:
-            '""': empty_body
-            _: symbol_entry_body
-
-  file_entry_body:
-    seq:
-      - id: num_addr_pairs
+      - id: start_address
         type: u4
-      - id: addr_pairs
-        type: addr_pair
-        repeat: expr
-        repeat-expr: num_addr_pairs
+      - id: end_address
+        type: u4
+
+  file_table:
+    params:
+      - id: version
+        type: u4
+
+    seq:
+      - id: entries
+        type: file_entry(version)
+        repeat: until
+        repeat-until: _.filepath == ""
 
   file_entry:
-    seq:
-      - id: filename
-        type: strz
-      - id: body
-        type:
-          switch-on: filename
-          cases:
-            '""': empty_body
-            _: file_entry_body
-
-  file_entry_dsp_body:
-    seq:
-      - id: num_addr_pairs
+    params:
+      - id: version
         type: u4
-      - id: addr_pairs
-        type: addr_triplet
-        repeat: expr
-        repeat-expr: num_addr_pairs
 
-  file_entry_dsp:
     seq:
-      - id: filename
+      - id: filepath
         type: strz
-      - id: body
-        type:
-          switch-on: filename
-          cases:
-            '""': empty_body
-            _: file_entry_dsp_body
+      - id: count
+        type: u4
+        if: filepath != ""
+      - id: ranges
+        type: range_entry(version)
+        repeat: expr
+        repeat-expr: count
+        if: filepath != ""
+
+  range_entry:
+    params:
+      - id: version
+        type: u4
+
+    seq:
+      - id: start_address
+        type: u4
+      - id: end_address
+        type: u4
+      - id: line_number
+        type: u4
+        if: version >= 2
