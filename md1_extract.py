@@ -14,15 +14,15 @@ def ensure_dir(path):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('img', type=argparse.FileType('rb'))
-    parser.add_argument('--outdir', type=str, default=None)
+    parser.add_argument("img", type=argparse.FileType("rb"))
+    parser.add_argument("--outdir", type=str, default=None)
     args = parser.parse_args()
 
     # make sure output directory exists or create it
     if args.outdir is not None:
         args.outdir = os.path.abspath(args.outdir)
         ensure_dir(args.outdir)
-        print(f'extracting files to: {args.outdir}')
+        print(f"extracting files to: {args.outdir}")
 
     md_img = Md1img(KaitaiStream(args.img))
 
@@ -36,15 +36,17 @@ def main():
         sec_hdr = section.body.sec_hdr
         fname = sec_hdr.name
 
-        print(f'{fname}: addr={sec_hdr.maddr:#010x}, size={sec_hdr.dsize}')
+        print(f"{fname}: addr={sec_hdr.maddr:#010x}, size={sec_hdr.dsize}")
 
         if args.outdir is not None:
-            out_path = os.path.join(args.outdir, f'{file_num:03}_{os.path.basename(fname)}')
+            out_path = os.path.join(
+                args.outdir, f"{file_num:03}_{os.path.basename(fname)}"
+            )
             file_num += 1
-            with open(out_path, 'wb') as out_file:
+            with open(out_path, "wb") as out_file:
                 out_file.write(section.sec_data)
-                print(f'\textracted to {os.path.basename(out_path)}')
+                print(f"\textracted to {os.path.basename(out_path)}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
