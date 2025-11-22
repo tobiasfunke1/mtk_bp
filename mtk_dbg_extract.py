@@ -43,16 +43,14 @@ def symbol_text(symbol_table: MtkDbgInfo.SymbolTable, remap=False, as_functions=
 
 
 def load_dbg_info(dbg_file):
-    mtk_dbg = MtkDbgInfo(KaitaiStream(dbg_file))
-    return mtk_dbg
+    return MtkDbgInfo(KaitaiStream(dbg_file))
 
 
 @app.command()
 def files(dbg_file: typer.FileBinaryRead):
-    mtk_dbg = load_dbg_info(dbg_file)
-    container = mtk_dbg.container
+    mtk_dbg_info = load_dbg_info(dbg_file)
 
-    for i, database_container in enumerate(container.databases):
+    for i, database_container in enumerate(mtk_dbg_info.databases):
         database_container: MtkDbgInfo.DatabaseContainer
         database: MtkDbgInfo.Database = database_container.database
 
@@ -64,21 +62,20 @@ def files(dbg_file: typer.FileBinaryRead):
 
 @app.command()
 def symbols(dbg_file: typer.FileBinaryRead, remap: bool = False, labels: bool = False):
-    mtk_dbg = load_dbg_info(dbg_file)
-    container = mtk_dbg.container
+    mtk_dbg_info = load_dbg_info(dbg_file)
 
-    for i, database_container in enumerate(container.databases):
+    for i, database_container in enumerate(mtk_dbg_info.databases):
         database_container: MtkDbgInfo.DatabaseContainer
         database: MtkDbgInfo.Database = database_container.database
 
-        if container.db_count > 1:
+        if mtk_dbg_info.db_count > 1:
             print(
                 f"# {database_container.offset:#08x} {database_container.name} {database_container.trace_tag}"
             )
 
         symbol_text(database.symbol_table, remap=remap, as_functions=(not labels))
 
-    if container.db_count > 1:
+    if mtk_dbg_info.db_count > 1:
         print(
             '# WARNING: output contains symbols for multiple debug info entries (separator lines begin with "#"")'
         )
@@ -86,10 +83,9 @@ def symbols(dbg_file: typer.FileBinaryRead, remap: bool = False, labels: bool = 
 
 @app.command()
 def info(dbg_file: typer.FileBinaryRead):
-    mtk_dbg = load_dbg_info(dbg_file)
-    container = mtk_dbg.container
+    mtk_dbg_info = load_dbg_info(dbg_file)
 
-    for i, database_container in enumerate(container.databases):
+    for i, database_container in enumerate(mtk_dbg_info.databases):
         database_container: MtkDbgInfo.DatabaseContainer
         database: MtkDbgInfo.Database = database_container.database
 

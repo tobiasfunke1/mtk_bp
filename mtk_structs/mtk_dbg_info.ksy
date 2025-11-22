@@ -5,33 +5,27 @@ meta:
   endian: le
 
 seq:
-  - id: container
-    type: databases_container
+  - id: magic
+    contents: "CATICTNR"
+  - id: version
+    type: u2
+  - id: sub_version
+    type: u2
+  - id: db_offset
+    type: u4
+
+instances:
+  db_count:
+    pos: db_offset
+    type: u4
+
+  databases:
+    pos: db_offset+4
+    type: database_container
+    repeat: expr
+    repeat-expr: db_count
 
 types:
-
-  databases_container:
-    seq:
-      - id: magic
-        contents: "CATICTNR"
-      - id: version
-        type: u2
-      - id: sub_version
-        type: u2
-      - id: db_offset
-        type: u4
-
-    instances:
-      db_count:
-        pos: db_offset
-        type: u4
-
-      databases:
-        pos: db_offset+4
-        type: database_container
-        repeat: expr
-        repeat-expr: db_count
-
   database_container:
     seq:
       - id: offset

@@ -16,12 +16,28 @@ class MtkDbgInfo(KaitaiStruct):
         self._read()
 
     def _read(self):
-        self.container = MtkDbgInfo.DatabasesContainer(self._io, self, self._root)
+        self.magic = self._io.read_bytes(8)
+        if not self.magic == b"\x43\x41\x54\x49\x43\x54\x4E\x52":
+            raise kaitaistruct.ValidationNotEqualError(b"\x43\x41\x54\x49\x43\x54\x4E\x52", self.magic, self._io, u"/seq/0")
+        self.version = self._io.read_u2le()
+        self.sub_version = self._io.read_u2le()
+        self.db_offset = self._io.read_u4le()
 
 
     def _fetch_instances(self):
         pass
-        self.container._fetch_instances()
+        _ = self.databases
+        if hasattr(self, '_m_databases'):
+            pass
+            for i in range(len(self._m_databases)):
+                pass
+                self._m_databases[i]._fetch_instances()
+
+
+        _ = self.db_count
+        if hasattr(self, '_m_db_count'):
+            pass
+
 
     class Database(KaitaiStruct):
         def __init__(self, _io, _parent=None, _root=None):
@@ -135,63 +151,6 @@ class MtkDbgInfo(KaitaiStruct):
             self._m_database = MtkDbgInfo.Database(self._io, self, self._root)
             self._io.seek(_pos)
             return getattr(self, '_m_database', None)
-
-
-    class DatabasesContainer(KaitaiStruct):
-        def __init__(self, _io, _parent=None, _root=None):
-            super(MtkDbgInfo.DatabasesContainer, self).__init__(_io)
-            self._parent = _parent
-            self._root = _root
-            self._read()
-
-        def _read(self):
-            self.magic = self._io.read_bytes(8)
-            if not self.magic == b"\x43\x41\x54\x49\x43\x54\x4E\x52":
-                raise kaitaistruct.ValidationNotEqualError(b"\x43\x41\x54\x49\x43\x54\x4E\x52", self.magic, self._io, u"/types/databases_container/seq/0")
-            self.version = self._io.read_u2le()
-            self.sub_version = self._io.read_u2le()
-            self.db_offset = self._io.read_u4le()
-
-
-        def _fetch_instances(self):
-            pass
-            _ = self.databases
-            if hasattr(self, '_m_databases'):
-                pass
-                for i in range(len(self._m_databases)):
-                    pass
-                    self._m_databases[i]._fetch_instances()
-
-
-            _ = self.db_count
-            if hasattr(self, '_m_db_count'):
-                pass
-
-
-        @property
-        def databases(self):
-            if hasattr(self, '_m_databases'):
-                return self._m_databases
-
-            _pos = self._io.pos()
-            self._io.seek(self.db_offset + 4)
-            self._m_databases = []
-            for i in range(self.db_count):
-                self._m_databases.append(MtkDbgInfo.DatabaseContainer(self._io, self, self._root))
-
-            self._io.seek(_pos)
-            return getattr(self, '_m_databases', None)
-
-        @property
-        def db_count(self):
-            if hasattr(self, '_m_db_count'):
-                return self._m_db_count
-
-            _pos = self._io.pos()
-            self._io.seek(self.db_offset)
-            self._m_db_count = self._io.read_u4le()
-            self._io.seek(_pos)
-            return getattr(self, '_m_db_count', None)
 
 
     class FileEntry(KaitaiStruct):
@@ -322,3 +281,30 @@ class MtkDbgInfo(KaitaiStruct):
             for i in range(len(self.entries)):
                 pass
                 self.entries[i]._fetch_instances()
+
+
+
+    @property
+    def databases(self):
+        if hasattr(self, '_m_databases'):
+            return self._m_databases
+
+        _pos = self._io.pos()
+        self._io.seek(self.db_offset + 4)
+        self._m_databases = []
+        for i in range(self.db_count):
+            self._m_databases.append(MtkDbgInfo.DatabaseContainer(self._io, self, self._root))
+
+        self._io.seek(_pos)
+        return getattr(self, '_m_databases', None)
+
+    @property
+    def db_count(self):
+        if hasattr(self, '_m_db_count'):
+            return self._m_db_count
+
+        _pos = self._io.pos()
+        self._io.seek(self.db_offset)
+        self._m_db_count = self._io.read_u4le()
+        self._io.seek(_pos)
+        return getattr(self, '_m_db_count', None)
